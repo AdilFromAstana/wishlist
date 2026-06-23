@@ -11,6 +11,7 @@ import type {
 } from "@/lib/types";
 import { ProtectedShell } from "@/components/ProtectedShell";
 import { WishlistCard } from "@/components/WishlistCard";
+import { WishlistDetailModal } from "@/components/WishlistDetailModal";
 import { useData } from "@/components/DataProvider";
 
 type SortKey = "created_at" | "price_kzt" | "priority";
@@ -21,6 +22,7 @@ export default function WishlistsPage() {
   const router = useRouter();
   const { items, profiles, loading, error, removeItem } = useData();
   const [deleteError, setDeleteError] = useState("");
+  const [detailId, setDetailId] = useState<string | null>(null);
 
   // Фильтры
   const [fOwner, setFOwner] = useState("");
@@ -113,7 +115,10 @@ export default function WishlistsPage() {
       .delete()
       .eq("id", item.id);
     if (error) setDeleteError(error.message);
-    else removeItem(item.id);
+    else {
+      removeItem(item.id);
+      setDetailId(null);
+    }
   };
 
   const openCreate = () => router.push("/wishlists/new");
@@ -303,12 +308,27 @@ export default function WishlistsPage() {
             <WishlistCard
               key={item.id}
               item={item}
+              onOpen={(it) => setDetailId(it.id)}
               onEdit={openEdit}
               onDelete={handleDelete}
             />
           ))}
         </div>
       )}
+
+      {detailId &&
+        (() => {
+          const detail = filtered.find((i) => i.id === detailId);
+          if (!detail) return null;
+          return (
+            <WishlistDetailModal
+              item={detail}
+              onClose={() => setDetailId(null)}
+              onEdit={openEdit}
+              onDelete={handleDelete}
+            />
+          );
+        })()}
     </ProtectedShell>
   );
 }

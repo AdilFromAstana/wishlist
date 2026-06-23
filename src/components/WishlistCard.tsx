@@ -6,13 +6,17 @@ import { ActiveBadge, PriorityBadge, StatusBadge } from "./Badge";
 
 interface Props {
   item: WishlistItemWithOwner;
+  onOpen: (item: WishlistItemWithOwner) => void;
   onEdit: (item: WishlistItemWithOwner) => void;
   onDelete: (item: WishlistItemWithOwner) => void;
 }
 
-export function WishlistCard({ item, onEdit, onDelete }: Props) {
+export function WishlistCard({ item, onOpen, onEdit, onDelete }: Props) {
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+    <div
+      onClick={() => onOpen(item)}
+      className="flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:shadow-md"
+    >
       <div className="relative h-40 w-full bg-gray-100">
         {item.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -65,6 +69,7 @@ export function WishlistCard({ item, onEdit, onDelete }: Props) {
             href={item.product_url}
             target="_blank"
             rel="noreferrer"
+            onClick={(e) => e.stopPropagation()}
             className="text-sm font-medium text-blue-600 hover:underline"
           >
             Ссылка на товар →
@@ -73,13 +78,19 @@ export function WishlistCard({ item, onEdit, onDelete }: Props) {
 
         <div className="mt-auto flex gap-2 pt-3">
           <button
-            onClick={() => onEdit(item)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(item);
+            }}
             className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             Изменить
           </button>
           <button
-            onClick={() => onDelete(item)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(item);
+            }}
             className="flex-1 rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
           >
             Удалить
