@@ -6,8 +6,7 @@
 
 Сделано как адаптивное веб-приложение — одинаково удобно с телефона и десктопа.
 
-> 🌐 **Демо:** _добавьте сюда ссылку на ваш Vercel-домен_
-> (`https://<project>.vercel.app`)
+> 🌐 **Демо:** https://wishlist-ten-gilt.vercel.app
 
 **Стек:** Next.js 14 (App Router) · React · TypeScript · Tailwind CSS · Supabase
 (PostgreSQL + Auth + Storage) · деплой на Vercel. Валюта — KZT (₸).
