@@ -37,12 +37,11 @@ export function useData() {
 }
 
 export function DataProvider({ children }: { children: ReactNode }) {
-  const { session } = useAuth();
+  const { session, loading: authLoading } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [items, setItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [loaded, setLoaded] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -55,20 +54,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
     else setItems((i.data as WishlistItem[]) ?? []);
     if (p.data) setProfiles(p.data as Profile[]);
     setLoading(false);
-    setLoaded(true);
   }, []);
 
-  // Грузим один раз после входа; чистим кэш при выходе.
+  // Грузим списки и для гостя, и для вошедшего; перечитываем при смене входа,
+  // чтобы подтянулись права (статус-контролы, кнопки управления).
   useEffect(() => {
-    if (session && !loaded) {
-      refresh();
-    } else if (!session) {
-      setProfiles([]);
-      setItems([]);
-      setLoaded(false);
-      setLoading(true);
-    }
-  }, [session, loaded, refresh]);
+    if (authLoading) return;
+    refresh();
+  }, [authLoading, session?.user?.id, refresh]);
 
   const upsertItem = useCallback((item: WishlistItem) => {
     setItems((prev) => {

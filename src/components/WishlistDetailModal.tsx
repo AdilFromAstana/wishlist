@@ -1,18 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import type { WishlistItemWithOwner } from "@/lib/types";
+import type { WishlistItem, WishlistItemWithOwner } from "@/lib/types";
 import { formatDate, formatKzt } from "@/lib/format";
 import { ActiveBadge, PriorityBadge, StatusBadge } from "./Badge";
+import { StatusControl } from "./StatusControl";
+import { QrCode } from "./QrCode";
 
 interface Props {
   item: WishlistItemWithOwner;
+  canManage: boolean;
+  isGifter: boolean;
   onClose: () => void;
   onEdit: (item: WishlistItemWithOwner) => void;
   onDelete: (item: WishlistItemWithOwner) => void;
+  onStatusChanged: (updated: WishlistItem) => void;
 }
 
-export function WishlistDetailModal({ item, onClose, onEdit, onDelete }: Props) {
+export function WishlistDetailModal({
+  item,
+  canManage,
+  isGifter,
+  onClose,
+  onEdit,
+  onDelete,
+  onStatusChanged,
+}: Props) {
   const images =
     item.image_urls && item.image_urls.length
       ? item.image_urls
@@ -31,24 +44,20 @@ export function WishlistDetailModal({ item, onClose, onEdit, onDelete }: Props) 
       onClick={onClose}
     >
       <div
-        className="flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl sm:max-h-[90vh] sm:rounded-2xl"
+        className="relative flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl sm:max-h-[90vh] sm:rounded-2xl lg:max-h-[88vh] lg:max-w-5xl lg:flex-row"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Шапка */}
-        <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-          <h2 className="truncate pr-2 text-lg font-bold">{item.title}</h2>
-          <button
-            onClick={onClose}
-            aria-label="Закрыть"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100"
-          >
-            ✕
-          </button>
-        </div>
+        <button
+          onClick={onClose}
+          aria-label="Закрыть"
+          className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-600 shadow hover:bg-white lg:right-4 lg:top-4"
+        >
+          ✕
+        </button>
 
-        <div className="overflow-y-auto">
-          {/* Галерея */}
-          <div className="relative aspect-square w-full bg-gray-100 sm:aspect-video">
+        {/* Левая колонка: галерея */}
+        <div className="flex flex-col bg-gray-50 lg:w-[55%] lg:shrink-0">
+          <div className="relative aspect-square w-full bg-gray-100 sm:aspect-video lg:aspect-auto lg:flex-1">
             {current ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -57,7 +66,7 @@ export function WishlistDetailModal({ item, onClose, onEdit, onDelete }: Props) 
                 className="h-full w-full object-contain"
               />
             ) : (
-              <div className="flex h-full items-center justify-center text-6xl text-gray-300">
+              <div className="flex h-full min-h-[16rem] items-center justify-center text-6xl text-gray-300">
                 🎁
               </div>
             )}
@@ -67,14 +76,14 @@ export function WishlistDetailModal({ item, onClose, onEdit, onDelete }: Props) 
                 <button
                   onClick={prev}
                   aria-label="Назад"
-                  className="absolute left-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70"
+                  className="absolute left-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-xl text-white hover:bg-black/70"
                 >
                   ‹
                 </button>
                 <button
                   onClick={next}
                   aria-label="Вперёд"
-                  className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70"
+                  className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-xl text-white hover:bg-black/70"
                 >
                   ›
                 </button>
@@ -85,7 +94,6 @@ export function WishlistDetailModal({ item, onClose, onEdit, onDelete }: Props) 
             )}
           </div>
 
-          {/* Миниатюры */}
           {images.length > 1 && (
             <div className="flex gap-2 overflow-x-auto p-3">
               {images.map((url, i) => (
@@ -102,27 +110,48 @@ export function WishlistDetailModal({ item, onClose, onEdit, onDelete }: Props) 
               ))}
             </div>
           )}
+        </div>
 
-          {/* Инфо */}
-          <div className="space-y-4 px-4 py-4">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-2xl font-bold">
+        {/* Правая колонка: информация */}
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex-1 overflow-y-auto px-5 py-5 lg:px-6">
+            <h2 className="pr-8 text-xl font-bold leading-tight lg:text-2xl">
+              {item.title}
+            </h2>
+
+            <div className="mt-3 flex items-center justify-between gap-2">
+              <span className="text-2xl font-bold lg:text-3xl">
                 {formatKzt(item.price_kzt)}
               </span>
               <div className="flex flex-wrap justify-end gap-1.5">
-                <StatusBadge status={item.status} />
                 <PriorityBadge priority={item.priority} />
                 <ActiveBadge active={item.is_active} />
               </div>
             </div>
 
+            {/* Статус подарка */}
+            <div className="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                  Статус
+                </span>
+                <StatusBadge status={item.status} />
+              </div>
+              <StatusControl
+                item={item}
+                canChange={isGifter}
+                mode="stepper"
+                onChanged={onStatusChanged}
+              />
+            </div>
+
             {item.description && (
-              <p className="whitespace-pre-wrap break-words text-sm text-gray-600">
+              <p className="mt-5 whitespace-pre-wrap break-words text-sm text-gray-600">
                 {item.description}
               </p>
             )}
 
-            <dl className="grid grid-cols-2 gap-3 text-sm">
+            <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
               <div>
                 <dt className="text-xs text-gray-400">Владелец</dt>
                 <dd className="font-medium">
@@ -136,32 +165,43 @@ export function WishlistDetailModal({ item, onClose, onEdit, onDelete }: Props) 
             </dl>
 
             {item.product_url && (
-              <a
-                href={item.product_url}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-block break-all text-sm font-medium text-blue-600 hover:underline"
-              >
-                Ссылка на товар →
-              </a>
+              <div className="mt-5 flex flex-col gap-4 lg:flex-row lg:items-center">
+                <a
+                  href={item.product_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-50"
+                >
+                  Открыть товар →
+                </a>
+                {/* QR — на десктопе: сканируй телефоном и открой магазин */}
+                <div className="hidden items-center gap-3 lg:flex">
+                  <QrCode value={item.product_url} size={120} />
+                  <p className="max-w-[10rem] text-xs text-gray-400">
+                    Наведи камеру телефона, чтобы открыть товар
+                  </p>
+                </div>
+              </div>
             )}
           </div>
-        </div>
 
-        {/* Действия */}
-        <div className="flex gap-2 border-t border-gray-100 p-4">
-          <button
-            onClick={() => onEdit(item)}
-            className="flex-1 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-800"
-          >
-            Изменить
-          </button>
-          <button
-            onClick={() => onDelete(item)}
-            className="flex-1 rounded-lg border border-red-200 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50"
-          >
-            Удалить
-          </button>
+          {/* Действия владельца */}
+          {canManage && (
+            <div className="flex gap-2 border-t border-gray-100 p-4 lg:px-6">
+              <button
+                onClick={() => onEdit(item)}
+                className="flex-1 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-800"
+              >
+                Изменить
+              </button>
+              <button
+                onClick={() => onDelete(item)}
+                className="flex-1 rounded-lg border border-red-200 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50"
+              >
+                Удалить
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

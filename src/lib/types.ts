@@ -1,4 +1,9 @@
-export type Status = "not_purchased" | "purchased";
+export type Status =
+  | "wanted"
+  | "ordered"
+  | "shipping"
+  | "received"
+  | "given";
 export type Priority = "high" | "medium" | "low";
 
 export interface Profile {

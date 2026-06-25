@@ -14,7 +14,7 @@ export default function UsersPage() {
       return {
         profile: p,
         total: owned.length,
-        purchased: owned.filter((i) => i.status === "purchased").length,
+        purchased: owned.filter((i) => i.status === "given").length,
         active: owned.filter((i) => i.is_active).length,
         activeSum: owned
           .filter((i) => i.is_active)
@@ -50,7 +50,7 @@ export default function UsersPage() {
               </div>
               <dl className="grid grid-cols-2 gap-3 text-sm">
                 <Stat label="Всего желаний" value={total} />
-                <Stat label="Куплено" value={purchased} />
+                <Stat label="Выдано" value={purchased} />
                 <Stat label="Активных" value={active} />
                 <Stat label="Сумма активных" value={formatKzt(activeSum)} />
               </dl>

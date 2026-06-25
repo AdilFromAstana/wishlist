@@ -1,17 +1,29 @@
 "use client";
 
-import type { WishlistItemWithOwner } from "@/lib/types";
+import type { WishlistItem, WishlistItemWithOwner } from "@/lib/types";
 import { formatDate, formatKzt } from "@/lib/format";
 import { ActiveBadge, PriorityBadge, StatusBadge } from "./Badge";
+import { StatusControl } from "./StatusControl";
 
 interface Props {
   item: WishlistItemWithOwner;
+  canManage: boolean;
+  isGifter: boolean;
   onOpen: (item: WishlistItemWithOwner) => void;
   onEdit: (item: WishlistItemWithOwner) => void;
   onDelete: (item: WishlistItemWithOwner) => void;
+  onStatusChanged: (updated: WishlistItem) => void;
 }
 
-export function WishlistCard({ item, onOpen, onEdit, onDelete }: Props) {
+export function WishlistCard({
+  item,
+  canManage,
+  isGifter,
+  onOpen,
+  onEdit,
+  onDelete,
+  onStatusChanged,
+}: Props) {
   return (
     <div
       onClick={() => onOpen(item)}
@@ -76,26 +88,41 @@ export function WishlistCard({ item, onOpen, onEdit, onDelete }: Props) {
           </a>
         )}
 
-        <div className="mt-auto flex gap-2 pt-3">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(item);
-            }}
-            className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            Изменить
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(item);
-            }}
-            className="flex-1 rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
-          >
-            Удалить
-          </button>
-        </div>
+        {/* Быстрая смена статуса — только для дарителя (не владельца) */}
+        {isGifter && (
+          <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+            <StatusControl
+              item={item}
+              canChange
+              mode="compact"
+              onChanged={onStatusChanged}
+            />
+          </div>
+        )}
+
+        {/* Управление карточкой — только владелец, только на «Мои желания» */}
+        {canManage && (
+          <div className="mt-auto flex gap-2 pt-3">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(item);
+              }}
+              className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Изменить
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(item);
+              }}
+              className="flex-1 rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+            >
+              Удалить
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

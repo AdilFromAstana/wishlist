@@ -29,7 +29,7 @@ export function useAuth() {
   return useContext(AuthContext);
 }
 
-const PUBLIC_ROUTES = ["/login"];
+const PUBLIC_ROUTES = ["/login", "/wishlists"];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (!session && !isPublic) {
       router.replace("/login");
-    } else if (session && isPublic) {
+    } else if (session && pathname === "/login") {
       router.replace("/wishlists");
     }
   }, [session, loading, pathname, router]);

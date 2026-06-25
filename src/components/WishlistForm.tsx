@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import type { Priority, Profile, Status, WishlistItem } from "@/lib/types";
+import type { Priority, WishlistItem } from "@/lib/types";
 import { useAuth } from "./AuthProvider";
 
 interface Props {
-  profiles: Profile[];
   item?: WishlistItem | null;
   onCancel: () => void;
   onSaved: (saved: WishlistItem) => void;
@@ -14,16 +13,14 @@ interface Props {
 
 const BUCKET = "wishlist-images";
 
-export function WishlistForm({ profiles, item, onCancel, onSaved }: Props) {
+export function WishlistForm({ item, onCancel, onSaved }: Props) {
   const { user } = useAuth();
   const [title, setTitle] = useState(item?.title ?? "");
   const [description, setDescription] = useState(item?.description ?? "");
   const [price, setPrice] = useState(String(item?.price_kzt ?? ""));
   const [productUrl, setProductUrl] = useState(item?.product_url ?? "");
-  const [status, setStatus] = useState<Status>(item?.status ?? "not_purchased");
   const [priority, setPriority] = useState<Priority>(item?.priority ?? "medium");
   const [isActive, setIsActive] = useState(item?.is_active ?? true);
-  const [ownerId, setOwnerId] = useState(item?.owner_id ?? user?.id ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -105,10 +102,8 @@ export function WishlistForm({ profiles, item, onCancel, onSaved }: Props) {
         product_url: productUrl.trim() || null,
         image_url: urls[0] ?? null,
         image_urls: urls,
-        status,
         priority,
         is_active: isActive,
-        owner_id: ownerId || null,
       };
 
       let saved: WishlistItem;
@@ -124,7 +119,7 @@ export function WishlistForm({ profiles, item, onCancel, onSaved }: Props) {
       } else {
         const { data, error: err } = await supabase
           .from("wishlist_items")
-          .insert({ ...payload, created_by: user?.id })
+          .insert({ ...payload, owner_id: user?.id, created_by: user?.id })
           .select()
           .single();
         if (err) throw err;
@@ -180,50 +175,6 @@ export function WishlistForm({ profiles, item, onCancel, onSaved }: Props) {
               placeholder="0"
             />
           </div>
-          {/* Владелец показывается только при редактировании.
-              При создании владелец = текущий пользователь. */}
-          {item && (
-            <div>
-              <label className={label}>Владелец</label>
-              <select
-                className={input}
-                value={ownerId}
-                onChange={(e) => setOwnerId(e.target.value)}
-              >
-                {profiles.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name || p.email}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-        </div>
-
-        <div>
-          <label className={label}>Ссылка на товар</label>
-          <input
-            className={input}
-            type="url"
-            inputMode="url"
-            placeholder="https://…"
-            value={productUrl}
-            onChange={(e) => setProductUrl(e.target.value)}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label className={label}>Статус</label>
-            <select
-              className={input}
-              value={status}
-              onChange={(e) => setStatus(e.target.value as Status)}
-            >
-              <option value="not_purchased">Не куплено</option>
-              <option value="purchased">Куплено</option>
-            </select>
-          </div>
           <div>
             <label className={label}>Приоритет</label>
             <select
@@ -236,6 +187,18 @@ export function WishlistForm({ profiles, item, onCancel, onSaved }: Props) {
               <option value="low">Низкий</option>
             </select>
           </div>
+        </div>
+
+        <div>
+          <label className={label}>Ссылка на товар</label>
+          <input
+            className={input}
+            type="url"
+            inputMode="url"
+            placeholder="https://…"
+            value={productUrl}
+            onChange={(e) => setProductUrl(e.target.value)}
+          />
         </div>
 
         {/* Активность — крупный переключатель, удобно тапать */}

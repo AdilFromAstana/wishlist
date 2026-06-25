@@ -10,14 +10,14 @@ export default function EditWishlistPage() {
   const params = useParams();
   const id = params?.id as string;
 
-  const { profiles, items, loading, upsertItem } = useData();
+  const { items, loading, upsertItem } = useData();
   const item = items.find((x) => x.id === id) ?? null;
 
   return (
     <ProtectedShell>
       <div className="mb-6 flex items-center gap-2">
         <button
-          onClick={() => router.push("/wishlists")}
+          onClick={() => router.push("/my")}
           aria-label="Назад"
           className="-ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-2xl text-gray-600 hover:bg-gray-100"
         >
@@ -34,12 +34,11 @@ export default function EditWishlistPage() {
         </p>
       ) : (
         <WishlistForm
-          profiles={profiles}
           item={item}
-          onCancel={() => router.push("/wishlists")}
+          onCancel={() => router.push("/my")}
           onSaved={(saved) => {
             upsertItem(saved);
-            router.push("/wishlists");
+            router.push("/my");
           }}
         />
       )}

@@ -5,8 +5,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 
-const links = [
-  { href: "/wishlists", label: "Мои вишлисты" },
+const guestLinks = [{ href: "/wishlists", label: "Все желания" }];
+
+const authLinks = [
+  { href: "/wishlists", label: "Все желания" },
+  { href: "/my", label: "Мои желания" },
   { href: "/users", label: "Пользователи" },
   { href: "/profile", label: "Личный кабинет" },
 ];
@@ -15,6 +18,7 @@ export function Navbar() {
   const pathname = usePathname();
   const { signOut, user } = useAuth();
   const [open, setOpen] = useState(false);
+  const links = user ? authLinks : guestLinks;
 
   return (
     <header className="sticky top-0 z-40 border-b border-gray-200 bg-white">
@@ -46,15 +50,26 @@ export function Navbar() {
             ))}
           </nav>
 
-          {/* Desktop: email + выход */}
+          {/* Desktop: email + выход / войти */}
           <div className="hidden items-center gap-3 sm:flex">
-            <span className="text-sm text-gray-500">{user?.email}</span>
-            <button
-              onClick={signOut}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Выйти
-            </button>
+            {user ? (
+              <>
+                <span className="text-sm text-gray-500">{user.email}</span>
+                <button
+                  onClick={signOut}
+                  className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Выйти
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className="rounded-md bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-gray-800"
+              >
+                Войти
+              </Link>
+            )}
           </div>
 
           {/* Бургер (только мобила) */}
@@ -94,18 +109,28 @@ export function Navbar() {
               </Link>
             ))}
             <div className="mt-2 border-t border-gray-100 pt-3">
-              {user?.email && (
-                <p className="px-3 pb-2 text-xs text-gray-400">{user.email}</p>
+              {user ? (
+                <>
+                  <p className="px-3 pb-2 text-xs text-gray-400">{user.email}</p>
+                  <button
+                    onClick={() => {
+                      setOpen(false);
+                      signOut();
+                    }}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2.5 text-left text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    Выйти
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={() => setOpen(false)}
+                  className="block w-full rounded-md bg-gray-900 px-3 py-2.5 text-center text-sm font-semibold text-white hover:bg-gray-800"
+                >
+                  Войти
+                </Link>
               )}
-              <button
-                onClick={() => {
-                  setOpen(false);
-                  signOut();
-                }}
-                className="w-full rounded-md border border-gray-300 px-3 py-2.5 text-left text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Выйти
-              </button>
             </div>
           </nav>
         )}
