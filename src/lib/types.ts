@@ -33,3 +33,11 @@ export interface WishlistItem {
 export interface WishlistItemWithOwner extends WishlistItem {
   owner?: Profile | null;
 }
+
+export interface StatusEvent {
+  id: string;
+  item_id: string;
+  status: Status;
+  changed_by: string | null;
+  created_at: string;
+}

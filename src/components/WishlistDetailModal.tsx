@@ -1,14 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import type { WishlistItem, WishlistItemWithOwner } from "@/lib/types";
-import { formatDate, formatKzt } from "@/lib/format";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import type {
+  Profile,
+  StatusEvent,
+  WishlistItem,
+  WishlistItemWithOwner,
+} from "@/lib/types";
+import { formatDate, formatDateTime, formatKzt } from "@/lib/format";
+import { STATUS_DOT, STATUS_LABELS } from "@/lib/status";
 import { ActiveBadge, PriorityBadge, StatusBadge } from "./Badge";
 import { StatusControl } from "./StatusControl";
-import { QrCode } from "./QrCode";
+import { QrModal } from "./QrModal";
 
 interface Props {
   item: WishlistItemWithOwner;
+  profiles: Profile[];
   canManage: boolean;
   isGifter: boolean;
   onClose: () => void;
@@ -19,6 +27,7 @@ interface Props {
 
 export function WishlistDetailModal({
   item,
+  profiles,
   canManage,
   isGifter,
   onClose,
@@ -26,6 +35,29 @@ export function WishlistDetailModal({
   onDelete,
   onStatusChanged,
 }: Props) {
+  const [showQr, setShowQr] = useState(false);
+  const [events, setEvents] = useState<StatusEvent[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    supabase
+      .from("wishlist_status_events")
+      .select("*")
+      .eq("item_id", item.id)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (active) setEvents((data as StatusEvent[]) ?? []);
+      });
+    return () => {
+      active = false;
+    };
+  }, [item.id, item.status]);
+
+  const nameOf = (id: string | null) => {
+    if (!id) return "—";
+    const p = profiles.find((x) => x.id === id);
+    return p?.name || p?.email || "—";
+  };
   const images =
     item.image_urls && item.image_urls.length
       ? item.image_urls
@@ -39,10 +71,18 @@ export function WishlistDetailModal({
   const next = () => setIndex((i) => (i + 1) % images.length);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-4"
-      onClick={onClose}
-    >
+    <>
+      {showQr && item.product_url && (
+        <QrModal
+          value={item.product_url}
+          title={item.title}
+          onClose={() => setShowQr(false)}
+        />
+      )}
+      <div
+        className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-4"
+        onClick={onClose}
+      >
       <div
         className="relative flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl sm:max-h-[90vh] sm:rounded-2xl lg:max-h-[88vh] lg:max-w-5xl lg:flex-row"
         onClick={(e) => e.stopPropagation()}
@@ -165,22 +205,55 @@ export function WishlistDetailModal({
             </dl>
 
             {item.product_url && (
-              <div className="mt-5 flex flex-col gap-4 lg:flex-row lg:items-center">
+              <div className="mt-5 flex flex-wrap gap-2">
                 <a
                   href={item.product_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-50"
+                  className="inline-flex flex-1 items-center justify-center rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-800"
                 >
                   Открыть товар →
                 </a>
-                {/* QR — на десктопе: сканируй телефоном и открой магазин */}
-                <div className="hidden items-center gap-3 lg:flex">
-                  <QrCode value={item.product_url} size={120} />
-                  <p className="max-w-[10rem] text-xs text-gray-400">
-                    Наведи камеру телефона, чтобы открыть товар
-                  </p>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowQr(true)}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-50"
+                >
+                  <span>▦</span> QR
+                </button>
+              </div>
+            )}
+
+            {/* История статусов */}
+            {events.length > 0 && (
+              <div className="mt-6">
+                <h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-gray-400">
+                  История статусов
+                </h3>
+                <ol className="space-y-3">
+                  {events.map((e, i) => (
+                    <li key={e.id} className="flex gap-3">
+                      <div className="flex flex-col items-center">
+                        <span
+                          className={`mt-1 h-2.5 w-2.5 rounded-full ${
+                            STATUS_DOT[e.status]
+                          } ${i === 0 ? "ring-2 ring-gray-900/30" : ""}`}
+                        />
+                        {i < events.length - 1 && (
+                          <span className="mt-1 w-px flex-1 bg-gray-200" />
+                        )}
+                      </div>
+                      <div className="pb-1">
+                        <div className="text-sm font-medium text-gray-800">
+                          {STATUS_LABELS[e.status]}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {formatDateTime(e.created_at)} · {nameOf(e.changed_by)}
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
               </div>
             )}
           </div>
@@ -204,6 +277,7 @@ export function WishlistDetailModal({
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

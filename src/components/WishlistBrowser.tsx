@@ -363,6 +363,7 @@ export function WishlistBrowser({ mode }: { mode: "all" | "mine" }) {
           return (
             <WishlistDetailModal
               item={detail}
+              profiles={profiles}
               canManage={canManage(detail)}
               isGifter={isGifter(detail)}
               onClose={() => setDetailId(null)}
